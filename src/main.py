@@ -7,8 +7,8 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.utils.chat_action import ChatActionMiddleware
 
 import config
-# handlers file from repository
 from handlers import router
+
 
 async def main():
     bot = Bot(token=config.BOT_TOKEN, parse_mode=ParseMode.HTML)
