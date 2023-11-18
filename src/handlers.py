@@ -1,12 +1,9 @@
 from aiogram import F, Router, types, flags, Bot
 from aiogram.filters import Command
-from aiogram.fsm import context
 from aiogram.fsm.context import FSMContext
-from aiogram.methods import GetFile
 from aiogram.types import Message, CallbackQuery
 
-from src.config import BOT_TOKEN, bot
-from src.utils import download_latest_photo, photo_handler
+from src.config import bot
 from states import States
 
 import kb

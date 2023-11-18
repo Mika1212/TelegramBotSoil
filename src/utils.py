@@ -1,9 +1,7 @@
 import os
 import requests
-from aiogram.methods import GetFile
 
 from src.config import BOT_TOKEN
-from aiogram.client import bot
 
 
 def download_latest_photo(dst_path, CHAT_ID):
