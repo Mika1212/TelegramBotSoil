@@ -1,7 +1,12 @@
 from aiogram import F, Router, types, flags, Bot
 from aiogram.filters import Command
+from aiogram.fsm import context
 from aiogram.fsm.context import FSMContext
+from aiogram.methods import GetFile
 from aiogram.types import Message, CallbackQuery
+
+from src.config import BOT_TOKEN, bot
+from src.utils import download_latest_photo, photo_handler
 from states import States
 
 import kb
@@ -59,6 +64,7 @@ async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
 @router.message(States.send_photo)
 @flags.chat_action("typing")
 async def handle_photo(msg: Message, state: FSMContext):
-    print(msg.photo)
-    print(msg)
-
+    file_id = msg.photo[-1].file_id
+    file = await bot.get_file(file_id)
+    file_path = file.file_path
+    await bot.download_file(file_path, "text.jpg")
