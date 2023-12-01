@@ -2,6 +2,7 @@ from aiogram import F, Router, types, flags, Bot
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
+from aiogram.types import InputFile
 
 from src.config import bot, BOT_TOKEN
 from states import States
@@ -9,9 +10,10 @@ from states import States
 import kb
 import text
 
+
 router = Router()
 global counter
-counter = 0
+counter = 1
 
 
 @router.message(Command("start"))
@@ -19,6 +21,7 @@ async def start_handler(msg: Message):
     await msg.answer(text.greet_text.format(name=msg.from_user.full_name), reply_markup=kb.menu)
 
 
+@router.message(States.main_menu)
 @router.message(F.text == "Меню")
 @router.message(F.text == "меню")
 @router.message(F.text == "Выйти в меню")
@@ -47,9 +50,9 @@ async def handle_message(msg: Message, state: FSMContext):
     print(msg)
 
 
-@router.callback_query(F.data == "help")
+@router.callback_query(F.data == "instruction")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
-    await clbck.message.edit_text(text.help_text)
+    await clbck.message.edit_text(text.instruction_text)
     await clbck.message.answer(text.exit_text, reply_markup=kb.exit_kb)
 
 
@@ -64,11 +67,15 @@ async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
 @flags.chat_action("typing")
 async def handle_photo(msg: Message, state: FSMContext):
     global counter
-    file_id = msg.document.file_id
+    try:
+        file_id = msg.document.file_id
+    except:
+        file_id = msg.photo[-1].file_id
     file = await bot.get_file(file_id)
     file_path = file.file_path
     CHAT_ID = msg.chat.id
-    file_name = F"{CHAT_ID}%{counter}.jpg"
-    await bot.download_file(file_path, F"Python_server/{file_name}")
-    counter += 1
+    file_name = F"{CHAT_ID}%{counter}"
+    await bot.download_file(file_path, F"Python_server/photos/{file_name}.jpg")
 
+    counter += 1
+    await msg.answer(text.file_answer_text.format(counter=counter))
