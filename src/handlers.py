@@ -1,15 +1,18 @@
+import os
+
 from aiogram import F, Router, types, flags, Bot
 from aiogram.filters import Command
+from aiogram.filters.callback_data import CallbackData
+
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from aiogram.types import InputFile
 
-from src.config import bot, BOT_TOKEN
+from src.config import bot, BOT_TOKEN, server_url
 from states import States
+import requests
 
 import kb
 import text
-
 
 router = Router()
 global counter
@@ -67,6 +70,7 @@ async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
 @flags.chat_action("typing")
 async def handle_photo(msg: Message, state: FSMContext):
     global counter
+
     try:
         file_id = msg.document.file_id
     except:
@@ -75,7 +79,14 @@ async def handle_photo(msg: Message, state: FSMContext):
     file_path = file.file_path
     CHAT_ID = msg.chat.id
     file_name = F"{CHAT_ID}%{counter}"
+
     await bot.download_file(file_path, F"Python_server/photos/{file_name}.jpg")
+    await msg.answer(text.file_answer_text.format(counter=counter))
+
+    f = open(F"Python_server/photos/{file_name}.jpg", 'rb')
+    files = {"file": (f.name, f, "multipart/form-data")}
+    requests.post(url=F"{server_url}/download_photo", files=files)
+    f.close()
+    os.remove(F"Python_server/photos/{file_name}.jpg")
 
     counter += 1
-    await msg.answer(text.file_answer_text.format(counter=counter))
