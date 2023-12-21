@@ -1,15 +1,18 @@
+import os
+
 from aiogram import F, Router, types, flags, Bot
 from aiogram.filters import Command
+
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from aiogram.types import InputFile
 
-from src.config import bot, BOT_TOKEN
+from src import utils
+from src.config import bot, server_url
 from states import States
+import requests
 
 import kb
 import text
-
 
 router = Router()
 global counter
@@ -38,16 +41,48 @@ async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "message_us")
 async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
-    await state.set_state(States.message_us)
+    await state.set_state(States.message_us_question)
     await clbck.message.edit_text(text.message_us_text)
     await clbck.message.answer(text.exit_text, reply_markup=kb.exit_kb)
 
 
-@router.message(States.message_us)
+@router.message(States.message_us_question)
 @flags.chat_action("typing")
 async def handle_message(msg: Message, state: FSMContext):
-    print(msg.photo)
-    print(msg)
+    await state.update_data(question=msg.text)
+    await msg.answer(text.mail_text, reply_markup=kb.exit_kb)
+    await state.set_state(States.message_us_mail)
+
+
+@router.message(States.message_us_mail)
+@flags.chat_action("typing")
+async def handle_message(msg: Message, state: FSMContext):
+    if utils.message_is_mail(msg.text):
+        await state.update_data(mail=msg.text)
+        user_data = await state.get_data()
+        question = user_data['question']
+        await msg.answer(text=f'Ты хочешь отправить нам письмо с вопросом:\n\n<b>{question}</b>\n\n'
+                              f'И получить ответ на почту: <b>{msg.text}</b>\n\n'
+                              f'Все верно?', parse_mode='HTML', reply_markup=kb.yes_no_kb)
+        await state.set_state(States.confirm_sending_mail)
+    else:
+        await msg.answer(text="Введи свою почту в верном формате!")
+
+
+@router.callback_query(F.data == "mail_yes")
+async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
+    user_data = await state.get_data()
+    mail = user_data['mail']
+    question = user_data['question']
+    if utils.send_mail(question, mail) == 0:
+        await clbck.message.answer(text="Письмо отправлено!", reply_markup=kb.exit_kb)
+    else:
+        await clbck.message.answer(text=text.error_text, reply_markup=kb.exit_kb)
+
+
+@router.callback_query(F.data == "mail_no")
+async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
+    await clbck.message.answer(text="Твое письмо не отправлено!", reply_markup=kb.exit_kb)
 
 
 @router.callback_query(F.data == "instruction")
@@ -67,6 +102,7 @@ async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
 @flags.chat_action("typing")
 async def handle_photo(msg: Message, state: FSMContext):
     global counter
+
     try:
         file_id = msg.document.file_id
     except:
@@ -75,7 +111,14 @@ async def handle_photo(msg: Message, state: FSMContext):
     file_path = file.file_path
     CHAT_ID = msg.chat.id
     file_name = F"{CHAT_ID}%{counter}"
+
     await bot.download_file(file_path, F"Python_server/photos/{file_name}.jpg")
+    await msg.answer(text.file_answer_text.format(counter=counter))
+
+    f = open(F"Python_server/photos/{file_name}.jpg", 'rb')
+    files = {"file": (f.name, f, "multipart/form-data")}
+    requests.post(url=F"{server_url}/download_photo", files=files)
+    f.close()
+    os.remove(F"Python_server/photos/{file_name}.jpg")
 
     counter += 1
-    await msg.answer(text.file_answer_text.format(counter=counter))
