@@ -16,12 +16,13 @@ Release 1.0
 
 ## Запуск бота
 1. Клонирование репозитория:
+```
+ git clone (https://github.com/Mika1212/TelegramBotSoil)
 
- 'git clone (https://github.com/Mika1212/TelegramBotSoil)'
-
- 'cd TelegramBotSoil'
+ cd TelegramBotSoil
+```
 2. Установка зависимостей:
-'''
+```
  pip install -r requirements.txt
  '''
 3. Запуск сервера:
