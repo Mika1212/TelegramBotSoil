@@ -34,3 +34,5 @@ def send_photo(photo, CHAT_ID, ID):
 
     # читаем данные с URL-адреса и выводим их data = webUrl.read()
     print(webUrl.read())
+    return text
+
