@@ -8,9 +8,10 @@ from aiogram.utils.chat_action import ChatActionMiddleware
 from src.config import bot
 from handlers import router
 
+dp = Dispatcher(storage=MemoryStorage())
+
 
 async def main():
-    dp = Dispatcher(storage=MemoryStorage())
     dp.include_router(router)
     dp.message.middleware(ChatActionMiddleware())
     await bot.delete_webhook(drop_pending_updates=True)

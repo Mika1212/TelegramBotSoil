@@ -1,0 +1,1 @@
+# python -m unittest discover -s ../tests/ -p '*Tests_Bot*.py' -t C:\Users\User\PycharmProjects\TelegramBotSoilMy

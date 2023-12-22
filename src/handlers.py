@@ -30,17 +30,18 @@ async def start_handler(msg: Message):
 @router.message(F.text == "Выйти в меню")
 @router.message(F.text == "◀️ Выйти в меню")
 async def menu(msg: Message):
+    print(msg.from_user.id)
     await msg.answer(text.menu_text, reply_markup=kb.menu)
 
 
 @router.callback_query(F.data == "how_it_works")
-async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
+async def how_it_works(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.edit_text(text.how_it_works_text)
     await clbck.message.answer(text.exit_text, reply_markup=kb.exit_kb)
 
 
 @router.callback_query(F.data == "message_us")
-async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
+async def message_us(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(States.message_us_question)
     await clbck.message.edit_text(text.message_us_text)
     await clbck.message.answer(text.exit_text, reply_markup=kb.exit_kb)
@@ -48,7 +49,7 @@ async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
 
 @router.message(States.message_us_question)
 @flags.chat_action("typing")
-async def handle_message(msg: Message, state: FSMContext):
+async def message_us_question(msg: Message, state: FSMContext):
     await state.update_data(question=msg.text)
     await msg.answer(text.mail_text, reply_markup=kb.exit_kb)
     await state.set_state(States.message_us_mail)
@@ -56,21 +57,20 @@ async def handle_message(msg: Message, state: FSMContext):
 
 @router.message(States.message_us_mail)
 @flags.chat_action("typing")
-async def handle_message(msg: Message, state: FSMContext):
+async def message_us_mail(msg: Message, state: FSMContext):
     if utils.message_is_mail(msg.text):
         await state.update_data(mail=msg.text)
         user_data = await state.get_data()
         question = user_data['question']
-        await msg.answer(text=f'Ты хочешь отправить нам письмо с вопросом:\n\n<b>{question}</b>\n\n'
-                              f'И получить ответ на почту: <b>{msg.text}</b>\n\n'
-                              f'Все верно?', parse_mode='HTML', reply_markup=kb.yes_no_kb)
+        await msg.answer(text.question_all_text.format(question=question, mail=msg.text),
+                         parse_mode='HTML', reply_markup=kb.yes_no_kb)
         await state.set_state(States.confirm_sending_mail)
     else:
         await msg.answer(text="Введи свою почту в верном формате!")
 
 
 @router.callback_query(F.data == "mail_yes")
-async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
+async def mail_yes(clbck: CallbackQuery, state: FSMContext):
     user_data = await state.get_data()
     mail = user_data['mail']
     question = user_data['question']
@@ -81,18 +81,18 @@ async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data == "mail_no")
-async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
+async def mail_no(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.answer(text="Твое письмо не отправлено!", reply_markup=kb.exit_kb)
 
 
 @router.callback_query(F.data == "instruction")
-async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
+async def instruction(clbck: CallbackQuery, state: FSMContext):
     await clbck.message.edit_text(text.instruction_text)
     await clbck.message.answer(text.exit_text, reply_markup=kb.exit_kb)
 
 
 @router.callback_query(F.data == "send_photo")
-async def input_text_prompt(clbck: CallbackQuery, state: FSMContext):
+async def send_photo(clbck: CallbackQuery, state: FSMContext):
     await state.set_state(States.send_photo)
     await clbck.message.edit_text(text.send_photo_text)
     await clbck.message.answer(text.exit_text, reply_markup=kb.exit_kb)
