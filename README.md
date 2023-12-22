@@ -24,15 +24,15 @@ Release 1.0
 2. Установка зависимостей:
 ```
  pip install -r requirements.txt
- '''
+ ```
 3. Запуск сервера:
-'''
+```
  python -m uvicorn src.Python_Server.FastApiServer:app 
-'''
+```
 4. Запуск проекта:
-'''
+```
 python main.py
-'''
+```
 
 ## Лицензия
 Этот проект лицензирован в соответствии с условиями лицензии MIT — подробности см. в файле LICENSE.
